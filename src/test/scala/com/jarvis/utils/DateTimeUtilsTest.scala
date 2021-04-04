@@ -2,6 +2,8 @@ package com.jarvis.utils
 
 import org.apache.spark.sql.functions.{current_date, date_add}
 
+import java.time.ZoneOffset
+
 class DateTimeUtilsTest extends SparkTest {
   import DateTimeUtils._
   import spark.implicits._
@@ -28,5 +30,17 @@ class DateTimeUtilsTest extends SparkTest {
   test("return yesterday's date") {
     Seq(1).toDS().select(date_add(current_date(), -1).cast("string"))
       .as[String].collect.head shouldEqual yesterday
+  }
+
+  test("now UTC is close to currentTimeMillis") {
+    val currentTime = System.currentTimeMillis()
+    val now = nowUTC.toInstant(ZoneOffset.UTC).toEpochMilli
+
+    now - currentTime should be < 2000
+  }
+
+  test("start of month") {
+    startOfMonth("2021-02-19") shouldBe "2021-02-01"
+    startOfMonth("2020-11-03") shouldBe "2020-11-01"
   }
 }

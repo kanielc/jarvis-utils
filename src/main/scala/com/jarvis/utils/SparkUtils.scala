@@ -33,9 +33,9 @@ object SparkUtils {
    * Returns the schema for a type (e.g. case class, string, etc)
    *
    * @tparam T - The type whose schema is to be returned
-   * @return The schema for a Dataset built with that type
+   * @return The schema of a Dataset built with that type
    */
-  def schemaFor[T: TypeTag]: StructType = {
+  def schemaOf[T: TypeTag]: StructType = {
     val dataType = ScalaReflection.schemaFor[T].dataType
     dataType.asInstanceOf[StructType]
   }
@@ -122,7 +122,7 @@ object SparkUtils {
      * @return a Dataset of type U.
      */
     def cast[U: Encoder: TypeTag]: Dataset[U] = {
-      val expSchema = schemaFor[U]
+      val expSchema = schemaOf[U]
 
       val expFields = expSchema.fields.sortBy(_.name)
       val expFieldNamesSet = expSchema.fieldNames.toSet

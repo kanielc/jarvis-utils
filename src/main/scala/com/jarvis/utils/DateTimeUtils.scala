@@ -1,12 +1,14 @@
 package com.jarvis.utils
 
-import java.time.LocalDate
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneId, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 /* Several of these taken directly or with modifications from:
  https://github.com/kanielc/spark-utils/blob/master/src/main/scala/com/jakainas/functions/package.scala */
 object DateTimeUtils {
+  private val utcZoneId: ZoneId = ZoneId.of("UTC")
+
   /**
    * Adds days to a given date
    *
@@ -46,13 +48,36 @@ object DateTimeUtils {
    *
    * @return Today's date in UTC(String)
    */
-  def today: String = LocalDate.now().toString
+  def today: String = LocalDate.now(utcZoneId).toString
 
   /**
    * Yesterday as a string in UTC
    *
    * @return Yesterday's date in UTC(String)
    */
-  def yesterday: String = LocalDate.now().minusDays(1).toString
+  def yesterday: String = LocalDate.now(utcZoneId).minusDays(1).toString
+
+  /** Current time in UTC */
+  def nowUTC: LocalDateTime = LocalDateTime.now(utcZoneId)
+
+  /**
+   * Presents the milliseconds at the start of the given date
+   * @param date - date to get milliseconds for (YYYY-MM-DD)
+   * @return - milliseconds at the start of the given date
+   */
+  def startOfDayMillis(date: String): Long = parseDate(date).atStartOfDay.toInstant(ZoneOffset.UTC).toEpochMilli
+
+  /** Quick way to get the start of a month for a given date
+   * @param date - date to get start for month (YYYY-MM-DD)
+   * @return start of the given month
+   */
+  def startOfMonth(date: String): String = s"${date.substring(0, 7)}-01"
+
+  /**
+   * Convert a given number of milliseconds since Epoch to a date string
+   * @param millis - milliseconds since epoch
+   * @return - a UTC date in the format YYYY-MM-DD to which that millisecond count corresponds
+   */
+  def millisToDateUTC(millis: Long): String = Instant.ofEpochMilli(millis).atZone(utcZoneId).toLocalDate.toString
 
 }

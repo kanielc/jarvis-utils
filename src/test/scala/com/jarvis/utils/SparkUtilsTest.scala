@@ -37,7 +37,7 @@ class SparkUtilsTest extends SparkTest {
   test("can generate the schema of a case class") {
     val schema = Seq(TestData("a", 7), TestData("b", 3)).toDS.schema
 
-    schemaFor[TestData] shouldEqual schema
+    schemaOf[TestData] shouldEqual schema
   }
 
   test("to_date_str: numeric input, should give normal output") {

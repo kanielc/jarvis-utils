@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jarvis</groupId>
   <artifactId>jarvis-utils</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.1-SNAPSHOT</version>
   <inceptionYear>2021</inceptionYear>
   <properties>
     <scala.version>2.12.13</scala.version>
@@ -44,6 +44,12 @@
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
+      <version>3.1.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-catalyst_2.12</artifactId>
       <version>3.1.1</version>
       <scope>provided</scope>
     </dependency>
