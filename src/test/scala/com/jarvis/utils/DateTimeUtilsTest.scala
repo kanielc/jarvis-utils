@@ -36,7 +36,7 @@ class DateTimeUtilsTest extends SparkTest {
     val currentTime = System.currentTimeMillis()
     val now = nowUTC.toInstant(ZoneOffset.UTC).toEpochMilli
 
-    now - currentTime should be < 2000
+    now - currentTime should be < 2000L
   }
 
   test("start of month") {
