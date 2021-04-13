@@ -11,21 +11,6 @@ class SparkUtilsTest extends SparkTest {
   import org.apache.spark.sql.functions._
   import spark.implicits._
 
-  test("distinct by removes duplicates") {
-    // with a dataset
-    Seq("a", "b", "a").toDS().distinctRows(Seq('value), Seq(lit(true)))
-      .as[String].collect should contain theSameElementsAs Array("a", "b")
-
-    // with a dataframe
-    Seq("a", "b", "a").toDF("value").distinctRows(Seq('value), Seq(lit(true)))
-      .collect().map(_.getString(0)) should contain theSameElementsAs Array("a", "b")
-
-    // multi-column case class
-    Seq(TestData("a", 7), TestData("b", 3), TestData("a", 2)).toDS
-      .distinctRows(Seq('x), Seq('y.desc))
-      .collect() should contain theSameElementsAs Array(TestData("a", 7), TestData("b", 3))
-  }
-
   test("nvl replaces null") {
     Seq("a", "b", null).toDS.select(nvl('value, "c"))
       .as[String].collect should contain theSameElementsAs Array("a", "b", "c")
