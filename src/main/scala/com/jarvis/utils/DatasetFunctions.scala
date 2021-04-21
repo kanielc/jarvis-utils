@@ -1,6 +1,7 @@
 package com.jarvis.utils
 
 import com.jarvis.utils.SparkUtils.schemaOf
+import com.jarvis.utils.compaction.Compactor
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
 import org.apache.spark.sql._
@@ -167,4 +168,11 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
   def countBy(col1: String, cols: String*): DataFrame = {
     ds.groupBy(col1, cols: _*).agg(count("*") as "count").sort('count.desc)
   }
+
+  /**
+   * Creates a Compactor instance
+   *
+   * @return - Returns a compactor for writing this dataset
+   */
+  def compact: Compactor[T] = new Compactor[T](ds)
 }
