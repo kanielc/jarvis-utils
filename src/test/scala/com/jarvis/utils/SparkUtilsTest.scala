@@ -227,10 +227,7 @@ class SparkUtilsTest extends SparkTest {
   }
 
   test("cast function will throw exception when column has incorrect simple DataType, ignoring nullability") {
-    the[IllegalArgumentException] thrownBy Seq((1, 3)).toDF("x", "y").cast[TestData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestData' schema.
-        |Expected: StringType
-        |Received: IntegerType""".stripMargin
+    an[IllegalArgumentException] should be thrownBy Seq((1, 3)).toDF("x", "y").cast[TestData].collect
 
     //    root
     //    |-- x: string (nullable = true)
@@ -244,31 +241,15 @@ class SparkUtilsTest extends SparkTest {
   }
 
   test("cast function will throw exception when multiple columns have incorrect DataTypes") {
-    the[IllegalArgumentException] thrownBy Seq((1, "3")).toDF("x", "y").cast[TestData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestData' schema.
-        |Expected: StringType
-        |Received: IntegerType
-        |DataType for 'y' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestData' schema.
-        |Expected: IntegerType
-        |Received: StringType""".stripMargin
+    an[IllegalArgumentException] should be thrownBy Seq((1, "3")).toDF("x", "y").cast[TestData].collect
   }
 
   test("cast function will throw exception when multiple columns have incorrect DataTypes, even in the case of duplicate columns") {
-    the[IllegalArgumentException] thrownBy Seq((1, 1, "3")).toDF("x", "x", "y").cast[TestData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestData' schema.
-        |Expected: StringType
-        |Received: IntegerType
-        |DataType for 'y' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestData' schema.
-        |Expected: IntegerType
-        |Received: StringType""".stripMargin
+    an[IllegalArgumentException] should be thrownBy Seq((1, 1, "3")).toDF("x", "x", "y").cast[TestData].collect
   }
 
   test("cast function will throw exception when column has incorrect ArrayType, ignoring nullability") {
-    the[IllegalArgumentException] thrownBy Seq(Seq("1")).toDF("x").cast[TestCastArrayTypeData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestCastArrayTypeData' schema.
-        |Expected: ArrayType(IntegerType,false)
-        |Received: ArrayType(StringType,true)""".stripMargin
-
+    an[IllegalArgumentException] should be thrownBy Seq(Seq("1")).toDF("x").cast[TestCastArrayTypeData].collect
     //    root
     //    |-- x: array (nullable = true)
     //    |    |-- element: integer (containsNull = false)
@@ -281,10 +262,7 @@ class SparkUtilsTest extends SparkTest {
   }
 
   test("cast function will throw exception when column has incorrect MapType, ignoring nullability") {
-    the[Exception] thrownBy Seq(Map("1" -> "1")).toDF("x").cast[TestCastMapTypeData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestCastMapTypeData' schema.
-        |Expected: MapType(IntegerType,IntegerType,false)
-        |Received: MapType(StringType,StringType,true)""".stripMargin
+    an[Exception] should be thrownBy Seq(Map("1" -> "1")).toDF("x").cast[TestCastMapTypeData].collect
 
     //    root
     //    |-- x: map (nullable = true)
@@ -310,10 +288,8 @@ class SparkUtilsTest extends SparkTest {
   }
 
   test("cast function will throw exception when column has incorrect StructType, ignoring nullability") {
-    the[IllegalArgumentException] thrownBy spark.emptyDataFrame.withColumn("x", struct(lit(1) as "x", lit(1) as "y")).cast[TestCastStructTypeData].collect should have message
-      """DataType for 'x' column doesn't match expected DataType in 'com.jarvis.utils.SparkUtilsTest.TestCastStructTypeData' schema.
-        |Expected: StructType(StructField(x,StringType,true), StructField(y,IntegerType,false))
-        |Received: StructType(StructField(x,IntegerType,false), StructField(y,IntegerType,false))""".stripMargin
+    an[IllegalArgumentException] should be thrownBy spark.emptyDataFrame
+      .withColumn("x", struct(lit(1) as "x", lit(1) as "y")).cast[TestCastStructTypeData].collect
 
     //    root
     //    |-- x: struct (nullable = false)
@@ -342,7 +318,7 @@ class SparkUtilsTest extends SparkTest {
 
     try {
       raw.saveCsv(fileLoc)
-      val text = FileUtils.readFileToString(file).split("\n")
+      val text = FileUtils.readFileToString(file).split("[\n\r]+")
 
       text should contain theSameElementsAs Array("x,y,year,month,day", "a,7,2019,1,10", "b,3,2018,2,5")
 

@@ -6,11 +6,17 @@ import org.apache.spark.sql.functions.{col, lit}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-case class TestData(x: String, y: Int)
+object DatasetFunctionsTest {
+
+  case class TestData(x: String, y: Int)
+  case class Person(name: String, age: Int, income: java.lang.Double)
+
+}
 
 class DatasetFunctionsTest extends AnyFunSuite with Matchers {
   val spark = SparkSession.builder().master("local").getOrCreate()
   import spark.implicits._
+  import DatasetFunctionsTest._
 
   test("basic") {
     val ds = Seq((1, 2), (1, 1)).toDF("a", "b")
@@ -45,6 +51,16 @@ class DatasetFunctionsTest extends AnyFunSuite with Matchers {
     Seq(TestData("a", 7), TestData("b", 3), TestData("a", 2)).toDS()
       .distinctRows(Seq("x"), Seq('y.desc))
       .collect() should contain theSameElementsAs Array(TestData("a", 7), TestData("b", 3))
+  }
+
+  test("adopt works") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+    df.adopt[Person].collect() should contain theSameElementsAs Array(
+      Person("Bob", 5, null),
+      Person("Sally", 10, null)
+    )
+
+    an[RuntimeException] should be thrownBy Seq("Bob").toDF("name").adopt[Person].collect() // because age is a required field
   }
 }
 
