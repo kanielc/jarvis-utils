@@ -18,9 +18,7 @@ object PremiumPredictionModel extends SparkApp {
 
   private def createPipeline = {
     val assembler = new VectorAssembler()
-      .setInputCols(
-        Array("credit_score", "age", "marketing_rank", "gender", "urgency")
-      )
+      .setInputCols(Array("credit_score", "age", "marketing_rank", "gender", "urgency"))
       .setOutputCol("features")
 
     // not going for style
