@@ -5,7 +5,7 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.regression.LinearRegression
 
-object DSLeadModel extends SparkApp {
+object PremiumPredictionModel extends SparkApp {
   def main(args: Array[String]): Unit = {
 
     val prep = spark.table("lead_model_data").cache()
@@ -18,7 +18,9 @@ object DSLeadModel extends SparkApp {
 
   private def createPipeline = {
     val assembler = new VectorAssembler()
-      .setInputCols(Array("credit_score", "age", "marketing_rank", "gender", "urgency"))
+      .setInputCols(
+        Array("credit_score", "age", "marketing_rank", "gender", "urgency")
+      )
       .setOutputCol("features")
 
     // not going for style
