@@ -21,6 +21,7 @@ object PremiumEtl extends SparkApp {
     val prep = PremiumTransform.transform(leads)
     prep.write.mode("overwrite").saveAsTable("lead_model")
 
+    //spark.read.table("lead_model").write.mode("overwrite").parquet("C:\\Denton\\work\\de_eng_test\\table.parquet")
     spark.read.table("lead_model").show(false)
   }
 }

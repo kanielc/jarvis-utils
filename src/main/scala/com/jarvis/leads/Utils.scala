@@ -30,9 +30,15 @@ object Utils {
 
       val resultColumns = destSchema.map { destField =>
         val lowerName = destField.name.toLowerCase
-        val matching = currSchema.find(f => f.name.toLowerCase == lowerName && (f.dataType == destField.dataType || destField.dataType.isInstanceOf[StringType] || (destField.dataType.isInstanceOf[DecimalType] && f.dataType.isInstanceOf[DecimalType])))
+        val matching = {
+          currSchema.find(f => f.name.toLowerCase == lowerName &&
+            (f.dataType == destField.dataType || destField.dataType.isInstanceOf[StringType]
+              || (destField.dataType.isInstanceOf[DecimalType] && f.dataType.isInstanceOf[DecimalType])))
+        }
 
-        matching.fold(lit(null).cast(destField.dataType) as destField.name) { f => if (f.dataType == destField.dataType) ds(f.name) as destField.name else ds(f.name).cast(destField.dataType) as destField.name }
+        matching.fold(lit(null).cast(destField.dataType) as destField.name) { f =>
+          (if (f.dataType == destField.dataType) ds(f.name) else ds(f.name).cast(destField.dataType)) as destField.name
+        }
       }
 
       ds.select(resultColumns:_*).as[U]

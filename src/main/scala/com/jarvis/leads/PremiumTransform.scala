@@ -11,9 +11,9 @@ object PremiumTransform {
     leads
       .withColumn("gender", upper('gender).substr(1, 1))
       .withColumn("gender", when(!'gender.isin("M", "F"), "F").otherwise('gender))
+      .withColumn("gender", when('gender === "M", 1).otherwise(0)) // so gender = isMale
       .withColumn("urgency", lower('urgency))
       .withColumn("urgency", when(!'urgency.isin("within 2 months", "immediately", "not sure"), "not sure").otherwise('urgency))
-      .withColumn("gender", when('gender === "M", 1).otherwise(0)) // so gender = isMale
       .withColumn("urgency_immediately", when('urgency === "immediately", 1).otherwise(0))
       .withColumn("urgency_within_2_months", when('urgency === "within 2 months", 1).otherwise(0))
       .withColumn("urgency_not_sure", when('urgency === "not sure", 1).otherwise(0))
