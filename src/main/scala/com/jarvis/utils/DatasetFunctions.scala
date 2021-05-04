@@ -1,12 +1,13 @@
 package com.jarvis.utils
 
 import com.jarvis.utils.SparkUtils.schemaOf
+import com.jarvis.utils.compaction.Compactor
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.BindReferences.bindReference
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.functions.count
+import org.apache.spark.sql.functions.{count, lit}
 import org.apache.spark.sql.types._
 
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
@@ -166,5 +167,40 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
    */
   def countBy(col1: String, cols: String*): DataFrame = {
     ds.groupBy(col1, cols: _*).agg(count("*") as "count").sort('count.desc)
+  }
+
+  /**
+   * Creates a Compactor instance
+   *
+   * @return - Returns a compactor for writing this dataset
+   */
+  def compact: Compactor[T] = new Compactor[T](ds)
+
+  /**
+   * A test-only utility function that turns a Dataset/DataFrame into a typed Dataset with missing columns
+   * being given a value of null. This will fail if required non-nullable fields are not provided.
+   *
+   * @note DO NOT USE IN PRODUCTION CODE. It hides a lot of potential bugs if you do.
+   * @return - current Dataset as an instance of Dataset[U] with fields removed as necessary and missing ones added
+   *         with null values.
+   */
+  def adopt[U: Encoder : TypeTag](implicit tp: TypeTag[T]): Dataset[U] = {
+    val destSchema = schemaOf[U]
+    val currSchema = ds.schema
+
+    val resultColumns = destSchema.map { destField =>
+      val lowerName = destField.name.toLowerCase
+      val matching = {
+        currSchema.find(f => f.name.toLowerCase == lowerName &&
+          (f.dataType == destField.dataType || destField.dataType.isInstanceOf[StringType]
+            || (destField.dataType.isInstanceOf[DecimalType] && f.dataType.isInstanceOf[DecimalType])))
+      }
+
+      matching.fold(lit(null).cast(destField.dataType) as destField.name) { f =>
+        (if (f.dataType == destField.dataType) ds(f.name) else ds(f.name).cast(destField.dataType)) as destField.name
+      }
+    }
+
+    ds.select(resultColumns:_*).as[U]
   }
 }
