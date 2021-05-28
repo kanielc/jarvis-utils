@@ -7,9 +7,10 @@ import org.apache.hadoop.io.IOUtils
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.BindReferences.bindReference
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.functions.{count, lit}
+import org.apache.spark.sql.functions.{col, count, lit}
 import org.apache.spark.sql.types._
 
+import scala.annotation.tailrec
 import scala.reflect.runtime.universe.{TypeTag, typeOf}
 
 class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
@@ -112,9 +113,21 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
    * @param renameColTuples - a list of current, new column name Tuples2 (currColName: String, newColName: String).
    * @return - The DataFrame with mulitple renamed columns.
    */
-  def withColumnsRenamed(renameColTuples: (String, String)*): DataFrame = renameColTuples.foldLeft(ds.toDF()) {
-    // From left to right, for each new (currColName, newColName) Tuple apply withColumnRenamed
-    case (newDF, (currColName, newColName)) => newDF.withColumnRenamed(currColName, newColName)
+  @tailrec
+  final def withColumnsRenamed(renameColTuples: (String, String)*): DataFrame = {
+    val renameMap = {
+      val colSet = ds.columns.toSet
+      renameColTuples.filter(kv => colSet.contains(kv._1)).toMap
+    }
+
+    val deferred = renameColTuples.filterNot(kv => renameMap.contains(kv._1))
+    val res = ds.select(ds.columns.map(c => renameMap.get(c).fold(col(c)){v => col(c) as v}):_*)
+
+    if (deferred.nonEmpty) {
+      new DatasetFunctions(res).withColumnsRenamed(deferred:_*)
+    } else {
+      res
+    }
   }
 
   /**
