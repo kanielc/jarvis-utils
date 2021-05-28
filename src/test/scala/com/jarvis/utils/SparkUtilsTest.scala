@@ -2,7 +2,7 @@ package com.jarvis.utils
 
 import com.jarvis.utils.SparkUtils._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{AnalysisException, Row}
 
 import java.io.File
 
@@ -80,6 +80,25 @@ class SparkUtilsTest extends SparkTest {
     Seq(TestData("a", 7), TestData("b", 3)).toDS()
       .withColumnsRenamed("x" -> "a", "y" -> "b")
       .select('a, 'b).as[(String, Int)].collect should contain theSameElementsAs Array(("a", 7), ("b", 3))
+  }
+
+  test("withColumnsRenamed back and forth") {
+    val input = Seq((1, 2, 3)).toDF("a", "b", "c")
+
+    val trans = input.withColumnsRenamed("a" -> "d", "d" -> "a")
+    trans.columns should not contain "d"
+
+    trans.select('a).as[Int].collect() should contain theSameElementsAs Array(1)
+    an[AnalysisException] should be thrownBy trans.select('d).show(false)
+  }
+
+  test("withColumnsRenamed - column should not exist after rename") {
+    val input = Seq((1, 2, 3)).toDF("a", "b", "c")
+
+    val trans = input.withColumnsRenamed("a" -> "d")
+    trans.columns should not contain "a"
+
+    an [Exception] should be thrownBy trans.withColumnsRenamed("c"-> "d", "a" -> "e")
   }
 
   test("load csv file into dataframe") {
