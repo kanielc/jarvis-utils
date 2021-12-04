@@ -24,6 +24,13 @@ object Utils {
   }
 
   implicit class DSFunctions[T](val ds: Dataset[T]) extends AnyVal {
+    def cast[U: Encoder : TypeTag]: Dataset[U] = {
+      val destSchema = schemaOf[U]
+
+      import org.apache.spark.sql.functions._
+      ds.select(destSchema.map(c => col(c.name)):_*).as[U]
+    }
+
     def adopt[U: Encoder : TypeTag](implicit tp: TypeTag[T]): Dataset[U] = {
       val destSchema = schemaOf[U]
       val currSchema = ds.schema
