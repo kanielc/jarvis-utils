@@ -77,7 +77,7 @@ abstract public class Shell {
       throw new IOException(String.format(
           "The command line has a length of %d exceeds maximum allowed length of %d. " +
           "Command starts with: %s",
-          len, WINDOWS_MAX_SHELL_LENGHT,
+          uen, WINDOWS_MAX_SHELL_LENGHT,
           StringUtils.join("", commands).substring(0, 100)));
     }
   }
