@@ -7,8 +7,8 @@ import java.sql._
 
 /** Filters a column by an inclusive range. Meant to be equivalent to ANSI SQL's BETWEEN operator */
 case class DataRange[T: Ordering](private val column: String, private val start: T, private val end: T) {
-  require(column != null && start != null && end != null, s"Null parameters are not allowed for DateRange.  Parameters provided are column: $column, start: $start, end: $end")
-  require(implicitly[Ordering[T]].compare(start, end) < 1, s"parameter $start must <= $end")
+  require(column != null && start != null && end != null, StringContext("Null parameters are not allowed for DateRange. Parameters provided are column: ", "", "start: ", "", "end: ", "").s(column,start,end))
+  require(implicitly[Ordering[T]].compare(start, end) < 1, StringContext("parameter ","", " must <= ", "").s(start,end))
 
   val queryString: String = start match {
     case x: AnyRef if (x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp]) && start == end => s"($column = '$start')"
