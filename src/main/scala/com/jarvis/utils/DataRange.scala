@@ -11,10 +11,10 @@ case class DataRange[T: Ordering](private val column: String, private val start:
   require(implicitly[Ordering[T]].compare(start, end) < 1, StringContext("parameter ","", " must <= ", "").s(start,end))
 
   val queryString: String = start match {
-    case x: AnyRef if (x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp]) && start == end => s"($column = '$start')"
-    case x: AnyRef if x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp] => s"($column BETWEEN '$start' and '$end')"
-    case _: java.lang.Number if start == end => s"($column = $start)"
-    case _: java.lang.Number => s"($column BETWEEN $start and $end)"
+    case x: AnyRef if (x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp]) && start == end => StringContext("", " = ", "").s(column,start)
+    case x: AnyRef if x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp] => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
+    case _: java.lang.Number if start == end => StringContext("", " = ", "").s(column,start)
+    case _: java.lang.Number => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
   }
 }
 
