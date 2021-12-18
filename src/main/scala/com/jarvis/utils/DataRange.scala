@@ -14,7 +14,7 @@ case class DataRange[T: Ordering](private val column: String, private val start:
     case x: AnyRef if (x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp]) && start == end => StringContext("", " = ", "").s(column,start)
     case x: AnyRef if x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp] => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
     case _: java.lang.Number if start == end => StringContext("", " = ", "").s(column,start)
-    case _: java.lang.Number => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
+    case _: java.lang.Number => StringContext("", " BETWEEN  ", "", " and ", "").s(column,start,end)
   }
 }
 
