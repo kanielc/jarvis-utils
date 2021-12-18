@@ -4,6 +4,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.expr
 
 import java.sql._
+import scala.language.implicitConversions
 
 /** Filters a column by an inclusive range. Meant to be equivalent to ANSI SQL's BETWEEN operator */
 case class DataRange[T: Ordering](private val column: String, private val start: T, private val end: T) {
@@ -14,12 +15,12 @@ case class DataRange[T: Ordering](private val column: String, private val start:
     case x: AnyRef if (x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp]) && start == end => StringContext("", " = ", "").s(column,start)
     case x: AnyRef if x.isInstanceOf[String] || x.isInstanceOf[Date] || x.isInstanceOf[Timestamp] => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
     case _: java.lang.Number if start == end => StringContext("", " = ", "").s(column,start)
-    case _: java.lang.Number => StringContext("", " BETWEEN  ", "", " and ", "").s(column,start,end)
+    case _: java.lang.Number => StringContext("", " BETWEEN ", "", " and ", "").s(column,start,end)
   }
 }
 
 object DataRange {
-  def apply[T: Ordering](column: String, start: T): DataRange[T] = new DataRange[T](column, start, start)
+  def apply[T: Ordering](column: String, start: T): DataRange[T] = DataRange[T](column, start, start)
 
   implicit def dateRange2Column(d: DataRange[_]): Column = expr(d.queryString)
 
