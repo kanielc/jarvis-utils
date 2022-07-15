@@ -113,7 +113,6 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
    * @param renameColTuples - a list of current, new column name Tuples2 (currColName: String, newColName: String).
    * @return - The DataFrame with mulitple renamed columns.
    */
-  @tailrec
   final def withColumnsRenamed(renameColTuples: (String, String)*): DataFrame = {
     val renameMap = {
       val colSet = ds.columns.toSet
