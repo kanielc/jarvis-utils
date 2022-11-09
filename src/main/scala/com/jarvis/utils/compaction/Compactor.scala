@@ -2,7 +2,7 @@ package com.jarvis.utils.compaction
 
 import com.jarvis.utils.compaction.Compactor.{bestBlockCount, locateFolders}
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.{DataFrame, DataFrameWriter, Dataset, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrameWriter, Dataset, SaveMode, SparkSession}
 
 import java.net.URI
 import scala.util.Random
@@ -94,13 +94,13 @@ class Compactor[T](ds: Dataset[T]) {
     }
 
     if (null == partitions || partitions.isEmpty) {
-      ds.write.mode(mode).parquet(tempPath)
+      writer.mode(mode).parquet(tempPath)
       val df = spark.read.parquet(tempPath).repartition(bestBlockCount(tempPath, localFS, destFS))
         .write.mode(mode).options(properties).format(format)
 
         doWrite(df, location)
     } else {
-      ds.write.mode(mode).partitionBy(partitions:_*).parquet(tempPath)
+      writer.mode(mode).partitionBy(partitions:_*).parquet(tempPath)
       val suffix = format match {
         case "parquet" | "avro" | "orc" => format
         case _ => throw new RuntimeException("Compaction is only supported for parquet, avro and orc formats")
