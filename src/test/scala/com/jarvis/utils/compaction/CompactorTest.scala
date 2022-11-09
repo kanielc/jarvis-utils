@@ -1,8 +1,8 @@
 package com.jarvis.utils.compaction
 
 import com.jarvis.utils.SparkTest
-import com.jarvis.utils.compaction.CompactorTest.TestData
 import com.jarvis.utils.SparkUtils._
+import com.jarvis.utils.compaction.CompactorTest.TestData
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
