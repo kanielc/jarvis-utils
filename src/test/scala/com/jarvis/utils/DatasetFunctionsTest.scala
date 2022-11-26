@@ -2,7 +2,7 @@ package com.jarvis.utils
 
 import SparkUtils._
 import org.apache.spark.sql.{Row, SparkSession}
-import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.functions.{col, concat, lit}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -61,6 +61,80 @@ class DatasetFunctionsTest extends AnyFunSuite with Matchers {
     )
 
     an[RuntimeException] should be thrownBy Seq("Bob").toDF("name").adopt[Person].collect() // because age is a required field
+  }
+
+  test("withColumns - simple new column") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    val res = df.withColumns(("c", 'age + 1))
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 5, 6),
+      Row("Sally", 10, 11)
+    )
+    res.columns should contain theSameElementsAs Array("name", "age", "c")
+  }
+
+  test("withColumns - multiple new columns") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    val res = df.withColumns(("c", 'age + 1), ("d", concat('name, lit("s"))))
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 5, 6, "Bobs"),
+      Row("Sally", 10, 11, "Sallys")
+    )
+    res.columns should contain theSameElementsAs Array("name", "age", "c", "d")
+  }
+
+  test("withColumns - column exists in original df") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    val res = df.withColumns(("age", 'age + 1))
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 6),
+      Row("Sally", 11)
+    )
+    res.columns should contain theSameElementsAs Array("name", "age")
+  }
+
+  test("withColumns - multiple new columns, one reused") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    val res = df.withColumns(("c", 'age + 1), ("c", concat('name, lit("s"))))
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 5, "Bobs"),
+      Row("Sally", 10, "Sallys")
+    )
+    res.columns should contain theSameElementsAs Array("name", "age", "c")
+  }
+
+  test("withColumns - column reused with self-reference, maintains order") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    val res = df.withColumns(("c", 'age + 1), ("d", 'c + 'age), ("c", 'c + 'age + 1))
+
+    res.columns should contain theSameElementsInOrderAs Array("name", "age", "c", "d")
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 5, 12, 11),
+      Row("Sally", 10, 22, 21)
+    )
+  }
+
+  test("withColumns - support map style tuple2") {
+    val df = Seq(("Bob", 5), ("Sally", 10)).toDF("name", "age")
+
+    // literals complicate things as the new definition must then be bracketed, but works otherwise
+    val res = df.withColumns("c" -> ('age + 1), "d" -> concat('name, lit("s")))
+
+    res.collect() should contain theSameElementsAs Array(
+      Row("Bob", 5, 6, "Bobs"),
+      Row("Sally", 10, 11, "Sallys")
+    )
+    res.columns should contain theSameElementsAs Array("name", "age", "c", "d")
   }
 }
 

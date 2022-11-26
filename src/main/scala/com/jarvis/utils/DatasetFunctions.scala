@@ -101,9 +101,45 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
    * @param newColTuples - a list of name-value Tuples2 (colName: String, colVal: Column).
    * @return - The DataFrame with new columns added.
    */
-  def withColumns(newColTuples: (String, Column)*): DataFrame = newColTuples.foldLeft(ds.toDF()) {
-    // From left to right, for each new (colName, colVal) Tuple add it to the current DataFrame
-    case (newDF, (colName, colVal)) => newDF.withColumn(colName, colVal)
+  @tailrec final def withColumns(newColTuples: (String, Column)*): DataFrame = {
+    val allCols = ds.schema.fieldNames
+    val forbiddenChars = Seq('#', '.', '\'')
+
+    // reject special characters
+    allCols.foreach(c => require(!c.exists(forbiddenChars.contains),
+      s"""Columns containing ${forbiddenChars.toString()} are not allowed, and $c violates that."""))
+
+    // for each column to update, we include all of those that don't have a reference to another that has to be updated first
+    val (now, later) = {
+      val seen = new scala.collection.mutable.HashSet[String]
+      val references = newColTuples.map { case (name, definition) =>
+        val refs = definition.expr.collectLeaves.map(_.toString).collect { case c if c.startsWith("'") => c.replaceAll("'", "") }.toSet
+        (name, definition, refs)
+      }
+      references.partition {
+        case (n, _, _) if seen.contains(n) => false // re-using a column already being added, so wait until next iteration
+        case (n, _, refs) if refs.intersect(seen).isEmpty => // no overlap with others already being changed
+          seen.add(n)
+          true
+        case (n, _, _) =>  // we've got to wait until next iteration
+          seen.add(n)
+          false
+      }
+    }
+
+    val updatedCurrent = {
+      val nowMap = now.map{case (n, d, _) => (n, d)}.toMap
+      allCols.map(c => nowMap.getOrElse(c, col(c)) as c)
+    }
+
+    val toAddFromNow = {
+      val allColsSet = allCols.toSet
+      now.filterNot(n => allColsSet.contains(n._1)).map { case (name, newVal, _) => newVal as name }
+    }
+
+    val newCols = updatedCurrent ++ toAddFromNow
+    val nextDf = ds.select(newCols:_*)
+    if (later.isEmpty) nextDf else new DatasetFunctions[Row](nextDf).withColumns(later.map{ case (n, d, _) => (n, d)}:_*)
   }
 
   /**
