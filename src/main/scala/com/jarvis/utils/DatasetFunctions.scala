@@ -251,4 +251,56 @@ class DatasetFunctions[T](private val ds: Dataset[T]) extends AnyVal {
 
     ds.select(resultColumns:_*).as[U]
   }
+
+  /**
+   * Returns a string representing the case class for the present Dataset.
+   * @param name - Name of the resulting case class
+   * @return A String representing the case class, with the given name
+   * @note Doesn't handle nested structs (for now)
+   */
+  def caseClass(name: String): String = {
+    def typeString(dt: DataType): String = dt match {
+      case ByteType | ShortType | FloatType | DoubleType | StringType | BooleanType | IntegerType =>
+        dt.simpleString.capitalize
+      case LongType => "Long"
+      case _: ArrayType =>
+        val e = dt match {
+          case ArrayType(elemType, _) => elemType
+        }
+        s"Seq[${typeString(e)}]"
+      case _: MapType =>
+        val (k, v) = dt match {
+          case MapType(keyType, valueType, _) => (keyType, valueType)
+        }
+        s"scala.collection.Map[${typeString(k)}, ${typeString(v)}]"
+      case _: DecimalType => "java.math.BigDecimal"
+      case _: BinaryType => "Array[Byte]"
+      case _: DateType => "java.sql.Date"
+      case _: TimestampType => "java.sql.Timestamp"
+      case _: StructType => "org.apache.spark.sql.Row"
+      case _ => "String"
+    }
+
+    def field(s: StructField): String = {
+      val f = typeString(s.dataType)
+      val name = s.name
+      s match {
+        case _ if f == "String" => s"$name: $f"
+        case x if x.nullable && !f.exists(c => c == '.' || c == '[') => s"$name: Option[$f]"
+        case _ => s"$name: $f"
+      }
+    }
+
+    val sb = new StringBuilder
+    var i = 0
+    ds.schema.foreach { s =>
+      if (i > 0) {
+        sb ++= (if (i % 10 == 0) ",\n  " else ", ")
+      }
+      sb ++= field(s)
+      i += 1
+    }
+
+    s"""case class $name(${sb.toString()})""".stripMargin
+  }
 }

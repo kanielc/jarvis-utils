@@ -6,6 +6,9 @@ import org.apache.spark.sql.functions.{col, concat, lit}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import java.math.MathContext
+import java.sql.{Date, Timestamp}
+
 object DatasetFunctionsTest {
 
   case class TestData(x: String, y: Int)
@@ -135,6 +138,41 @@ class DatasetFunctionsTest extends AnyFunSuite with Matchers {
       Row("Sally", 10, 11, "Sallys")
     )
     res.columns should contain theSameElementsAs Array("name", "age", "c", "d")
+  }
+
+  test("case class works for simple types") {
+    val df = Seq(("Bob", 5, 100), ("Sally", 10, 1000)).toDF("name", "age", "income")
+
+    df.caseClass("Person") shouldEqual "case class Person(name: String, age: Int, income: Int)"
+  }
+
+  test("case class long comes in as LongType") {
+    val df = Seq((1L, null.asInstanceOf[java.lang.Long])).toDF("a", "b")
+
+    df.caseClass("Res") shouldEqual "case class Res(a: Long, b: Option[Long])"
+  }
+
+  test("case class works for complex types") {
+    val df = Seq((
+      new java.sql.Date(0),
+      new Timestamp(0),
+      new java.math.BigDecimal("0.056"),
+      Array(3.byteValue),
+      Array("A", "B"),
+    )).toDF("a", "b", "c", "d", "e")
+
+    df.caseClass("Res") shouldEqual
+      "case class Res(a: java.sql.Date, b: java.sql.Timestamp, c: java.math.BigDecimal, d: Array[Byte], e: Seq[String])"
+  }
+
+  test("case class works for other complex types") {
+    val df = Seq((
+      Map[Int, java.sql.Date](1 -> new Date(0)),
+      TestData("b", 3)
+    )).toDF("a", "b")
+
+    df.caseClass("Res") shouldEqual
+      "case class Res(a: scala.collection.Map[Int, java.sql.Date], b: org.apache.spark.sql.Row)"
   }
 }
 
