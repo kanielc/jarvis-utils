@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jarvis</groupId>
   <artifactId>jarvis-utils</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.2.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <inceptionYear>2021</inceptionYear>
 
